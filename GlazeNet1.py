@@ -1,0 +1,24 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class Net(nn.Module):
+    def __init__(self, out_D):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(3, 8, 2)
+        self.fc1 = nn.Linear(1800, out_D)
+
+    def forward(self, x):
+        x = F.max_pool2d(self.conv1(x), (2, 2))
+        x = x.view(-1, self.num_flat_features(x))
+        x = self.fc1(x)
+        return x
+
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features
+
+
