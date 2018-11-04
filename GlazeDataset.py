@@ -1,13 +1,7 @@
 import os
-from skimage import io, transform
-from skimage.color import rgba2rgb
 from torch.utils.data import Dataset, DataLoader
 import torch
-import torchvision.transforms as transforms
-
-transform_norm = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+from utils import load_image_as_vec
 
 
 class GlazeDataset (Dataset):
@@ -18,22 +12,16 @@ class GlazeDataset (Dataset):
         self.raw_data = raw_data
 
     def get_recipe(self, idx):
-        return torch.as_tensor(self.recipes.as_matrix[idx])
+        return torch.as_tensor(self.recipes.as_matrix[idx]).float()
 
     def get_image(self, idx):
         d = self.raw_data[idx]
         image_name = os.path.join(
             self.image_dir, d['selectedImage']['filename'])
-        image = io.imread(image_name)
-        image = transform.resize(
-            image, (32, 32), mode='constant', anti_aliasing=True)
-        if image.shape[2] == 4:
-            image = rgba2rgb(image)
-        image = transform_norm(image)
-        return image
+        return load_image_as_vec(image_name)
 
     def __len__(self):
         return len(self.raw_data)
 
     def __getitem__(self, idx):
-        return self.get_image(idx).float(), self.get_recipe(idx).float()
+        return self.get_image(idx), self.get_recipe(idx)

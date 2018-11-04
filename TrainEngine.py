@@ -1,4 +1,3 @@
-import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -7,12 +6,8 @@ from ignite.engine import Events, create_supervised_trainer, create_supervised_e
 from GlazeDataset import GlazeDataset
 from GlazeRecipes import GlazeRecipes
 from GlazeMaterialDictionary import MaterialDictionary
-from GlazeNet1 import Net
-
-
-def load_raw_data(json_file="data.json"):
-    with open(json_file) as f:
-        return json.load(f)
+from GlazeNet3 import Net
+from utils import load_raw_data
 
 
 def get_data_loaders(material_dict, raw_data):
@@ -34,16 +29,20 @@ def train():
     material_dict = MaterialDictionary(raw_data)
     model = Net(len(material_dict))
     train_loader, val_loader = get_data_loaders(material_dict, raw_data)
-    loss = nn.MSELoss()
+    loss = nn.L1Loss()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     trainer = create_supervised_trainer(model, optimizer, loss)
     metrics = {'L2': ignite.metrics.MeanPairwiseDistance(
     )}
     evaluator = create_supervised_evaluator(model, metrics)
+    saver = ignite.handlers.ModelCheckpoint('./checkpoints/models', 'chkpoint',
+                                            save_interval=2, n_saved=4, create_dir=True, require_empty=False)
+    trainer.add_event_handler(Events.EPOCH_COMPLETED,
+                              saver, {'glaze_net_3': model})
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def log_training_loss(trainer):
-        print("Epoch[{}] Loss: {:.2f}".format(
+        print("Epoch[{}] Loss: {:.10f}".format(
             trainer.state.epoch, trainer.state.output))
 
     @trainer.on(Events.EPOCH_COMPLETED)
@@ -60,5 +59,5 @@ def train():
         print("Validation Results - Epoch: {}  Avg L2: {:.2f}"
               .format(trainer.state.epoch, metrics['L2']))
 
-    trainer.run(train_loader, max_epochs=10)
+    trainer.run(train_loader, max_epochs=100)
     return model
