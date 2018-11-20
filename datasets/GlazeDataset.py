@@ -14,6 +14,10 @@ class GlazeDataset (Dataset):
     def get_recipe(self, idx):
         return torch.as_tensor(self.recipes.as_matrix[idx]).float()
 
+    def get_composition(self, idx)
+        d = self.raw_data[idx]
+        return 
+
     def get_image(self, idx):
         d = self.raw_data[idx]
         image_name = os.path.join(
