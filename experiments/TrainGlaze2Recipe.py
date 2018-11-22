@@ -3,9 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import ignite
 from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator
-from GlazeDataset import GlazeDataset
-from GlazeRecipes import GlazeRecipes
-from GlazeMaterialDictionary import MaterialDictionary
+from datasets import GlazeDataset, GlazeCompositionDictionary, GlazeRecipes, GlazeMaterialDictionary
 from GlazeNet3 import Net
 from utils import load_raw_data
 
@@ -26,7 +24,7 @@ def get_data_loaders(material_dict, raw_data):
 
 def train():
     raw_data = load_raw_data()
-    material_dict = MaterialDictionary(raw_data)
+    material_dict = GlazeMaterialDictionary(raw_data)
     model = Net(len(material_dict))
     train_loader, val_loader = get_data_loaders(material_dict, raw_data)
     loss = nn.L1Loss()

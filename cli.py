@@ -1,6 +1,2 @@
-from argparse import ArgumentParser
-from TrainEngine import train
-
-parser = ArgumentParser()
-
+from experiments.Glaze2Comp1 import train
 train()

@@ -1,24 +1,48 @@
-import json
 import torchvision.transforms as transforms
-from skimage.color import rgba2rgb
-from skimage import io, transform
-
-
-def load_raw_data(json_file="data.json"):
-    with open(json_file) as f:
-        return json.load(f)
+from PIL import Image
+import torch
 
 
 transform_norm = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    [
+        transforms.RandomCrop(32),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ]
+)
 
 
 def load_image_as_vec(image_path):
-    image = io.imread(image_path)
-    image = transform.resize(
-        image, (32, 32), mode='constant', anti_aliasing=True)
-    if image.shape[2] == 4:
-        image = rgba2rgb(image)
+    image = Image.open(image_path).convert('RGB')
     image = transform_norm(image).float()
     return image
+
+
+def tensor_as_perfect_100_total(x):
+    "use largest remainder algorithm to scale vector to percentage of 100"
+    x = torch.tensor(x).float()
+    norm_x = x * 100 / x.sum()
+    norm_x = norm_x.floor()
+    _, greatest_remainders = norm_x.sort(descending=False)
+    j = 0
+    remainder = 100 - norm_x.sum()
+    while remainder > 0 and j < len(x):
+        norm_x[greatest_remainders[j]] += 1
+        j += 1
+        remainder -= 1
+        if remainder > 0 and j == len(x):
+            j = 0
+    return norm_x
+
+
+def get_data_loaders(full_dataset):
+    train_size = int(0.8 * len(full_dataset))
+    test_size = len(full_dataset) - train_size
+    print('Train size: %i, test size: %i' % (train_size, test_size))
+    train_dataset, test_dataset = torch.utils.data.random_split(
+        full_dataset, [train_size, test_size])
+    testloader = torch.utils.data.DataLoader(
+        test_dataset, batch_size=64, shuffle=True, num_workers=2)
+    trainloader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=64, shuffle=True, num_workers=2)
+    return trainloader, testloader

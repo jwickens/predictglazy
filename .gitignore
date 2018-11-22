@@ -5,3 +5,10 @@ checkpoints/
 node_modules/
 __pycache__/
 data.json
+.__pycache__
+.pytest_cache
+.vscode
+*.pth
+
+# mnist example
+examples/
