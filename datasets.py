@@ -4,10 +4,9 @@ import json
 from torch.utils.data import Dataset, DataLoader
 import torch
 import math
-from utils import load_image_as_vec, tensor_as_perfect_100_total
+from utils import load_image_as_vec, tensor_as_perfect_100_total, hex2rgb
 
 CALCULATED_COMPOUND_ATTRS = ['SiO2Al2O3Ratio', 'R2OTotal', 'ROTotal']
-CROP_RANDOMLY_N = 1000
 
 
 class GlazeBaseDataset (Dataset):
@@ -15,13 +14,14 @@ class GlazeBaseDataset (Dataset):
     Base dataset for working with glazey data
     """
 
-    def __init__(self, image_dir='./data/images'):
+    def __init__(self, image_dir='./data/images', augment_n=1):
         self.image_dir = image_dir
         self.load_raw_data()
         self.material_by_mid = {}
         self.materials = []
         self.compounds = []
         self.compounds_by_name = {}
+        self.augment_n = augment_n
 
     def load_raw_data(self, json_file='./data/glaze_data.json'):
         with open(json_file) as f:
@@ -33,7 +33,7 @@ class GlazeBaseDataset (Dataset):
                 f(i)
 
     def raw_index(self, idx):
-        return math.floor(idx / CROP_RANDOMLY_N)
+        return math.floor(idx / self.augment_n)
 
     def index_material(self, idx):
         raw_materials = self.get_materials_raw(idx)
@@ -84,6 +84,24 @@ class GlazeBaseDataset (Dataset):
         t = torch.FloatTensor(arr)
         return t
 
+    def get_color_raw(self, idx):
+        d = self.raw_data[idx]
+        image = d['selectedImage']
+        primary, secondary = '00000', '000000'
+        if 'dominantHexColor' in image:
+            primary = image['dominantHexColor']
+        else:
+            print('No dominant hex color for %i' % (d['id']))
+        if 'secondaryHexColor' in image:
+            secondary = image['secondaryHexColor']
+        else:
+            print('No secondary hex color for %i' % (d['id']))
+        return primary, secondary
+
+    def get_color(self, idx):
+        primary, secondary = self.get_color_raw(self.raw_index(idx))
+        return [*hex2rgb(primary), *hex2rgb(secondary)]
+
     def get_recipe(self, idx):
         return torch.as_tensor(self.recipes.as_matrix[idx]).float()
 
@@ -132,7 +150,7 @@ class GlazeBaseDataset (Dataset):
         return result
 
     def __len__(self):
-        return len(self.raw_data) * CROP_RANDOMLY_N
+        return len(self.raw_data) * self.augment_n
 
 
 class GlazeCompositionDataset(GlazeBaseDataset):
@@ -141,11 +159,24 @@ class GlazeCompositionDataset(GlazeBaseDataset):
     """
 
     def __init__(self):
-        super().__init__()
+        super().__init__(augment_n=1000)
         self.index([self.index_composition])
 
     def __getitem__(self, idx):
         return self.get_image(idx), self.get_composition(idx)
+
+
+class GlazeColor2CompositionDataset(GlazeBaseDataset):
+    """
+    X is RGB color and Y is composition
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.index([self.index_composition])
+
+    def __getitem__(self, idx):
+        return self.get_color(idx), self.get_composition(idx)
 
 
 class GlazeRecipeDataset(GlazeBaseDataset):

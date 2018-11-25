@@ -35,14 +35,26 @@ def tensor_as_perfect_100_total(x):
     return norm_x
 
 
-def get_data_loaders(full_dataset):
+def split_dataset(full_dataset):
     train_size = int(0.8 * len(full_dataset))
     test_size = len(full_dataset) - train_size
     print('Train size: %i, test size: %i' % (train_size, test_size))
     train_dataset, test_dataset = torch.utils.data.random_split(
         full_dataset, [train_size, test_size])
+    return train_dataset, test_dataset
+
+
+def get_data_loaders(full_dataset):
+    train_dataset, test_dataset = split_dataset(full_dataset)
     testloader = torch.utils.data.DataLoader(
         test_dataset, batch_size=64, shuffle=True, num_workers=2)
     trainloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=64, shuffle=True, num_workers=2)
     return trainloader, testloader
+
+
+def hex2rgb(hex):
+    """
+    from https://stackoverflow.com/questions/29643352/converting-hex-to-rgb-value-in-python
+    """
+    return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
