@@ -2,7 +2,16 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
+const SERVER = process.env.SERVER
+
 class App extends Component {
+  state = {
+    state: 'notAsked',
+    currentId: null
+  }
+  async getNext () {
+    fetch(`${SERVER}`)
+  }
   render() {
     return (
       <div className="App">

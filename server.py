@@ -17,6 +17,26 @@ model = Net(len(material_dict))
 model.eval()
 
 
+@app.route('/next', methods=['GET'])
+def get_next_glaze():
+    pass
+
+
+@app.route('/image', methods=['GET'])
+def get_image():
+    pass
+
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    pass
+
+
+@app.route('/train', methods=['POST'])
+def train():
+    pass
+
+
 @app.route('/glaze', methods=['POST'])
 def get_recipe_for_glaze():
     f = request.files['image']
