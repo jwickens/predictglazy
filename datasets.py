@@ -4,7 +4,9 @@ import json
 from torch.utils.data import Dataset, DataLoader
 import torch
 import math
-from utils import load_image_as_vec, tensor_as_perfect_100_total, hex2rgb
+import numpy as np
+from PIL import Image
+from utils import load_image_as_vec, tensor_as_perfect_100_total, hex2rgb, center_crop_PIL
 
 CALCULATED_COMPOUND_ATTRS = ['SiO2Al2O3Ratio', 'R2OTotal', 'ROTotal']
 
@@ -14,7 +16,7 @@ class GlazeBaseDataset (Dataset):
     Base dataset for working with glazey data
     """
 
-    def __init__(self, image_dir='./data/images', augment_n=1):
+    def __init__(self, image_dir=os.path.join(os.path.dirname(__file__), './data/images'), augment_n=1):
         self.image_dir = image_dir
         self.load_raw_data()
         self.material_by_mid = {}
@@ -23,7 +25,7 @@ class GlazeBaseDataset (Dataset):
         self.compounds_by_name = {}
         self.augment_n = augment_n
 
-    def load_raw_data(self, json_file='./data/glaze_data.json'):
+    def load_raw_data(self, json_file=os.path.join(os.path.dirname(__file__), './data/glaze_data.json')):
         with open(json_file) as f:
             self.raw_data = json.load(f)
 
@@ -59,11 +61,14 @@ class GlazeBaseDataset (Dataset):
                 self.compounds_by_name[compound] = len(self.compounds)
                 self.compounds.append(compound)
 
-    def get_image(self, idx):
+    def get_image_name(self, idx):
         d = self.raw_data[self.raw_index(idx)]
         image_name = os.path.join(
             self.image_dir, d['selectedImage']['filename'])
-        return load_image_as_vec(image_name)
+        return image_name
+
+    def get_image(self, idx):
+        return load_image_as_vec(self.get_image_name(idx))
 
     def get_materials_raw(self, idx):
         d = self.raw_data[idx]
@@ -190,3 +195,16 @@ class GlazeRecipeDataset(GlazeBaseDataset):
 
     def __getitem__(self, idx):
         return self.get_image(idx), self.get_recipe(idx)
+
+
+class GlazeFlattenedImageDataset(GlazeBaseDataset):
+    """
+    Returns a flattened image only
+    """
+
+    def __getitem__(self, idx):
+        image_name = self.get_image_name(idx)
+        image = Image.open(image_name).convert('RGB')
+        cropped = center_crop_PIL(image, 100, 100)
+        flat = np.asarray(cropped).flatten()
+        return flat

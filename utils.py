@@ -58,3 +58,13 @@ def hex2rgb(hex):
     from https://stackoverflow.com/questions/29643352/converting-hex-to-rgb-value-in-python
     """
     return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
+
+
+def center_crop_PIL(image, height, width):
+    w, h = image.size   # Get dimensions
+    left = (w - width)/2
+    top = (h - height)/2
+    right = (w + width)/2
+    bottom = (h + height)/2
+    cropped = image.crop((left, top, right, bottom))
+    return cropped

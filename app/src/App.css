@@ -1,5 +1,34 @@
+.Glaze-Image {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.Glaze {
+  position: relative;
+  display: block;
+}
+
+.Glaze-Cell {
+  flex: 1 0 0;
+  display: grid;
+  border: 1px solid black;
+}
+
+.Glaze-Row {
+  flex: 1 0 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
 .App {
-  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-content: flex-start;
 }
 
 .App-logo {
@@ -20,6 +49,10 @@
 
 .App-link {
   color: #61dafb;
+}
+
+div {
+  box-sizing: border-box;
 }
 
 @keyframes App-logo-spin {
