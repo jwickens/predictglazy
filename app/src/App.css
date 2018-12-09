@@ -1,3 +1,7 @@
+body {
+  overflow: hidden;
+}
+
 .Glaze-Image {
   object-fit: cover;
   width: 100%;
@@ -6,12 +10,13 @@
 
 .Glaze {
   position: relative;
-  display: block;
+  flex: 0 0 auto;
 }
 
 .Glaze-Cell {
   flex: 1 0 0;
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   border: 1px solid black;
 }
 
@@ -24,8 +29,7 @@
 }
 
 .App {
-  width: 100vw;
-  height: 100vh;
+  position: absolute;
   display: flex;
   flex-direction: column;
   align-content: flex-start;

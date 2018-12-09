@@ -24,18 +24,73 @@ const SERVER = process.env.SERVER;
 
 class App extends Component {
   state = {
+    zoom: 100,
+    isDragging: false,
+    initialX: null,
+    initialY: null,
+    top: 0,
+    left: 0,
     state: "notAsked",
     currentId: null
   };
   async getNext() {
     fetch(`${SERVER}`);
   }
+  handleAppRef = ref => {
+    if (ref) {
+      this.ref = ref;
+      ref.addEventListener("wheel", this.handleWheel);
+      ref.addEventListener("mousedown", this.handleMouseDown);
+      ref.addEventListener("mouseup", this.handleMouseUp);
+      ref.addEventListener("mousemove", this.handleMouseMove);
+    } else {
+      ref.removeEventListener("wheel", this.handleWheel);
+      ref.removeEventListener("mouseDown", this.handleMouseDown);
+      ref.removeEventListener("mouseUp", this.handleMouseUp);
+      ref.removeEventListener("mouseMove", this.handleMouseMove);
+      this.ref = ref;
+    }
+  };
+  handleWheel = e => {
+    this.setState(s => ({
+      ...s,
+      zoom: (s.zoom -= e.deltaY)
+    }));
+  };
+  handleMouseDown = e => {
+    this.setState(s => ({
+      ...s,
+      isDragging: true,
+      initialX: e.clientX - s.left,
+      initialY: e.clientY - s.top
+    }));
+  };
+  handleMouseMove = e => {
+    this.setState(s => {
+      if (!s.isDragging) {
+        return s;
+      }
+      return {
+        ...s,
+        left: e.clientX - s.initialX,
+        top: e.clientY - s.initialY
+      };
+    });
+  };
+  handleMouseUp = e => {
+    this.setState(s => ({
+      ...s,
+      isDragging: false
+    }));
+  };
   renderGlazesAt(i, j) {
     const glazes = remapped[i] && remapped[i][j];
     if (glazes) {
+      const height = `${100 / Math.sqrt(glazes.length)}%`;
+      const width = height;
       return glazes.map(g => (
-        <div className="Glaze">
-          <img className="Glaze-Image" src={`images/${g}`} />
+        <div className="Glaze" style={{ height, width }}>
+          <img draggable={false} className="Glaze-Image" src={`images/${g}`} />
         </div>
       ));
     } else {
@@ -56,7 +111,19 @@ class App extends Component {
       ));
   }
   render() {
-    return <div className="App">{this.renderMappedGlazes()}</div>;
+    const { zoom, top, left } = this.state;
+    const width = `${zoom}vw`;
+    const height = `${zoom}vh`;
+    console.log(`(${left}, ${top}) x ${zoom}`);
+    return (
+      <div
+        ref={this.handleAppRef}
+        className="App"
+        style={{ height, width, top, left }}
+      >
+        {this.renderMappedGlazes()}
+      </div>
+    );
   }
 }
 
