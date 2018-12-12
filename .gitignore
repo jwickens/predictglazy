@@ -12,3 +12,9 @@ data.json
 
 # mnist example
 examples/
+
+# virtual env controlled dir
+bin/
+lib/
+share/
+include/
